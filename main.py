@@ -14,9 +14,9 @@ from firebase_admin import storage
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+# app = FastAPI()
 
-# origins = ["*"]
+# origins = ["http://10.103.12.214:19001", "*"]
 
 # app.add_middleware(
 #     CORSMiddleware,
@@ -25,17 +25,17 @@ app = FastAPI()
 #     allow_methods=["*"],
 #     allow_headers=["*"],
 # )
-# middleware = [
-#     Middleware(
-#         CORSMiddleware,
-#         allow_origins=['*'],
-#         allow_credentials=True,
-#         allow_methods=['*'],
-#         allow_headers=['*']
-#     )
-# ]
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=['http://localhost:3000/', "http://localhost:3000/home",'*'],
+        allow_credentials=True,
+        allow_methods=['*'],
+        allow_headers=['*']
+    )
+]
 
-# app = FastAPI(middleware=middleware)
+app = FastAPI(middleware=middleware)
 
 
 # Initialize the Firebase app
@@ -44,12 +44,23 @@ firebase_app = initialize_app(cred, {
     'storageBucket': 'leaf-app-8225f.appspot.com'
 })
 
+
+### Load model 
 from tensorflow.keras.models import load_model
 import tensorflow as tf
+from sentence_transformers import SentenceTransformer
+import pandas as pd 
+from googletrans import Translator
+from scipy.spatial import distance
 
-model = load_model('model.h5', compile=False)
 
-leaf_classes = np.array(["Brownspot", "Blast", "Brownspot", "Tungro"])
+
+
+model = load_model('model_densenet121.h5', compile=False)
+nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+
+
+leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
 
 def preprocess_image(image):
     # Resize the image to the required size
@@ -66,7 +77,7 @@ def preprocess_image(image):
 
     return image
 
-@app.post("/detect-image")
+@app.get("/detect-image/{image_name}")
 def detect_image(image_name:str):
     full_path = f"Images/{image_name}"
     bucket = storage.bucket(app=firebase_app)
@@ -85,13 +96,54 @@ def detect_image(image_name:str):
 
     prediction = model.predict(img)
 
-    return {'Detected': f'Disease {leaf_classes[np.argmax(prediction)]}'}
+    return  [f'{leaf_classes[np.argmax(prediction)]}' , 
+             f'{sorted(prediction)[::-1][0]}']
+
+
+@app.get("/detect-symptomps/{description}")
+def detect_symptoms(description : str): 
+    df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
+    bacterial_disease = " ".join(df['Bacterialblight'].dropna().to_list()) 
+    blast_disease = " ".join(df['Blast'].dropna().to_list())
+    brownspot_disease = " ".join(df['Brownspot'].dropna().to_list())
+    tungro_disease = " ".join(df['Tungro'].dropna().to_list())
+    translator = Translator()
+    model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+    result1 = translator.translate(description, src='bn', dest='en')
+    description = result1.text
+    diseases = [bacterial_disease, blast_disease, brownspot_disease, tungro_disease]
+    diseases.append(description)
+    sentence_embeddings = model.encode(diseases)
+
+    symptoms = [1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[0]), 
+        1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[1]), 
+        1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[2]),
+        1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[3])]
+
+    seq = np.array(symptoms).argsort()[-4:][::-1] 
+    leaf_classes[seq[0]], leaf_classes[seq[1]]
+
+    num = 2
+    symptoms_seq = [symptoms[s] for s in seq]
+    if (symptoms_seq[0] - symptoms_seq[1] > 0.12) : 
+        num = 1
+    elif (symptoms_seq[0]- symptoms_seq[3] <0.04 ): 
+        num = 4
+    elif (symptoms_seq[0]-symptoms_seq[2] <0.08 ):
+        num = 3 
+
+    return {
+        'sim': [leaf_classes[s] for s in seq][:num],
+        'res': symptoms,
+        'all_seq': symptoms_seq
+        }
+        
 
 
 
 @app.get('/')
 def index():
-    return {'message': 'Hello, World'}
+    return {"message" : "welcome body"}
 
 @app.post('/todo')
 def get_something():
@@ -100,7 +152,7 @@ def get_something():
 
 
 
-# if __name__ == '__main__':
-#     uvicorn.run(app, host='127.0.0.1', port=8000)
+if __name__ == '__main__':
+    uvicorn.run(app, host='127.0.0.1', port=8000)
 
 #uvicorn main:app --reload
