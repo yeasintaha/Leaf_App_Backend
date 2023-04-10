@@ -13,6 +13,9 @@ from firebase_admin import storage
 # from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+import pydub
+from pydub import AudioSegment
+import speech_recognition as sr
 
 # app = FastAPI()
 
@@ -25,6 +28,7 @@ from starlette.middleware.cors import CORSMiddleware
 #     allow_methods=["*"],
 #     allow_headers=["*"],
 # )
+
 middleware = [
     Middleware(
         CORSMiddleware,
@@ -61,6 +65,27 @@ nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
 
 
 leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
+
+
+@app.get("/detect-voice/{voice_clip}")
+def detect_image(voice_clip:str):
+    full_path = f"Images/{voice_clip}"
+    bucket = storage.bucket(app=firebase_app)
+    blob = bucket.blob(full_path)
+    contents = blob.download_to_filename("/Leaf_Fastapi/voice_clip.mp3")
+    sound = pydub.AudioSegment.from_mp3("/Leaf_Fastapi/voice_clip.mp3")
+    sound.export("/Leaf_Fastapi/voice_clip.wav", format="wav")
+    r = sr.Recognizer()
+
+    with sr.AudioFile("/Leaf_Fastapi/voice_clip.wav") as source: 
+        print("File is being analised") 
+        audio = r.listen(source, phrase_time_limit=100000, ) 
+    try: 
+        text = r.recognize_google(audio, language='bn-BD')
+        return {"text" : text}
+    except:
+        return {"text": "-1"}
+
 
 def preprocess_image(image):
     # Resize the image to the required size
@@ -138,6 +163,8 @@ def detect_symptoms(description : str):
         'all_seq': symptoms_seq
         }
         
+
+
 
 
 
