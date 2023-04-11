@@ -43,7 +43,7 @@ app = FastAPI(middleware=middleware)
 
 
 # Initialize the Firebase app
-cred = credentials.Certificate('/Leaf_Fastapi/leaf_app_firebase.json')
+cred = credentials.Certificate('leaf_app_firebase.json')
 firebase_app = initialize_app(cred, {
     'storageBucket': 'leaf-app-8225f.appspot.com'
 })
@@ -72,12 +72,12 @@ def detect_image(voice_clip:str):
     full_path = f"Images/{voice_clip}"
     bucket = storage.bucket(app=firebase_app)
     blob = bucket.blob(full_path)
-    contents = blob.download_to_filename("/Leaf_Fastapi/voice_clip.mp3")
-    sound = pydub.AudioSegment.from_mp3("/Leaf_Fastapi/voice_clip.mp3")
-    sound.export("/Leaf_Fastapi/voice_clip.wav", format="wav")
+    contents = blob.download_to_filename("voice_clip.mp3")
+    sound = pydub.AudioSegment.from_mp3("voice_clip.mp3")
+    sound.export("voice_clip.wav", format="wav")
     r = sr.Recognizer()
 
-    with sr.AudioFile("/Leaf_Fastapi/voice_clip.wav") as source: 
+    with sr.AudioFile("voice_clip.wav") as source: 
         print("File is being analised") 
         audio = r.listen(source, phrase_time_limit=100000, ) 
     try: 
