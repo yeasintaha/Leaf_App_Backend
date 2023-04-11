@@ -32,7 +32,7 @@ import speech_recognition as sr
 middleware = [
     Middleware(
         CORSMiddleware,
-        allow_origins=['http://localhost:3000/', "http://localhost:3000/home",'*'],
+        allow_origins=['http://localhost:3000/', "http://localhost:3000/home", 'https://leaf-disease-web-app.vercel.app/', 'https://leaf-disease-web-app.vercel.app/home', '*'],
         allow_credentials=True,
         allow_methods=['*'],
         allow_headers=['*']
@@ -125,6 +125,20 @@ def detect_image(image_name:str):
              f'{sorted(prediction)[::-1][0]}']
 
 
+@app.get("/control-measures/{disease_name}") 
+def get_control_measures(disease_name : str): 
+    id = np.where(leaf_classes == disease_name) 
+    df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
+
+    bacterialblight_control_measures = df['Bacterialblight_control_measures'].dropna().to_list()
+    blast_control_measures = df['Blast_control_measures'].dropna().to_list()
+    brownspot_control_measures = df['Brownspot_control_measures'].dropna().to_list()
+    tungro_control_measures = df['Tungro_control_measures'].dropna().to_list()
+    control_measures = [bacterialblight_control_measures, blast_control_measures, brownspot_control_measures, tungro_control_measures]
+    # control_measures = np.array(control_measures)
+    return control_measures[int(id[0])]
+
+
 @app.get("/detect-symptomps/{description}")
 def detect_symptoms(description : str): 
     df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
@@ -132,6 +146,8 @@ def detect_symptoms(description : str):
     blast_disease = " ".join(df['Blast'].dropna().to_list())
     brownspot_disease = " ".join(df['Brownspot'].dropna().to_list())
     tungro_disease = " ".join(df['Tungro'].dropna().to_list())
+
+   
     translator = Translator()
     model = SentenceTransformer('distilbert-base-nli-mean-tokens')
     result1 = translator.translate(description, src='bn', dest='en')
@@ -163,10 +179,6 @@ def detect_symptoms(description : str):
         'all_seq': symptoms_seq
         }
         
-
-
-
-
 
 @app.get('/')
 def index():
