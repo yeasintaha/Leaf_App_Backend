@@ -61,7 +61,7 @@ from scipy.spatial import distance
 
 
 model = load_model('model_densenet121.h5', compile=False)
-nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+# nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
 
 
 leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
