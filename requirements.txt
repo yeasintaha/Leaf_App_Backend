@@ -3,18 +3,22 @@ pandas
 matplotlib
 scipy
 opencv-python
+pyaudio==0.2.11
 googletrans
 SpeechRecognition 
 pydub 
 uvicorn 
-fastapi==0.65.1 
-firebase_admin==6.1.0
+fastapi
+firebase_admin
 tensorflow
-gunicorn
+keras
 ffmpeg
 sentence-transformers
 scikit-learn
-uvloop 
+sklearn
 httptools
 websockets
+starlette
+uvloop
+gunicorn
 
