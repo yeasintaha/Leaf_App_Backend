@@ -3,7 +3,6 @@ pandas
 matplotlib
 scipy
 opencv-python
-pyaudio==0.2.11
 googletrans
 SpeechRecognition 
 pydub 
