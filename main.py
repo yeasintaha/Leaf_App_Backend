@@ -52,7 +52,7 @@ firebase_app = initialize_app(cred, {
 ### Load model 
 from tensorflow.keras.models import load_model
 import tensorflow as tf
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 import pandas as pd 
 from googletrans import Translator
 from scipy.spatial import distance
@@ -61,30 +61,30 @@ from scipy.spatial import distance
 
 
 model = load_model('model_densenet121.h5', compile=False)
-nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+# nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
 
 
 leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
 
 
-@app.get("/detect-voice/{voice_clip}")
-def detect_image(voice_clip:str):
-    full_path = f"Images/{voice_clip}"
-    bucket = storage.bucket(app=firebase_app)
-    blob = bucket.blob(full_path)
-    contents = blob.download_to_filename("voice_clip.mp3")
-    sound = pydub.AudioSegment.from_mp3("voice_clip.mp3")
-    sound.export("voice_clip.wav", format="wav")
-    r = sr.Recognizer()
+# @app.get("/detect-voice/{voice_clip}")
+# def detect_image(voice_clip:str):
+#     full_path = f"Images/{voice_clip}"
+#     bucket = storage.bucket(app=firebase_app)
+#     blob = bucket.blob(full_path)
+#     contents = blob.download_to_filename("voice_clip.mp3")
+#     sound = pydub.AudioSegment.from_mp3("voice_clip.mp3")
+#     sound.export("voice_clip.wav", format="wav")
+#     r = sr.Recognizer()
 
-    with sr.AudioFile("voice_clip.wav") as source: 
-        print("File is being analised") 
-        audio = r.listen(source, phrase_time_limit=100000, ) 
-    try: 
-        text = r.recognize_google(audio, language='bn-BD')
-        return {"text" : text}
-    except:
-        return {"text": "-1"}
+#     with sr.AudioFile("voice_clip.wav") as source: 
+#         print("File is being analised") 
+#         audio = r.listen(source, phrase_time_limit=100000, ) 
+#     try: 
+#         text = r.recognize_google(audio, language='bn-BD')
+#         return {"text" : text}
+#     except:
+#         return {"text": "-1"}
 
 
 def preprocess_image(image):
@@ -139,45 +139,45 @@ def get_control_measures(disease_name : str):
     return control_measures[int(id[0])]
 
 
-@app.get("/detect-symptomps/{description}")
-def detect_symptoms(description : str): 
-    df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
-    bacterial_disease = " ".join(df['Bacterialblight'].dropna().to_list()) 
-    blast_disease = " ".join(df['Blast'].dropna().to_list())
-    brownspot_disease = " ".join(df['Brownspot'].dropna().to_list())
-    tungro_disease = " ".join(df['Tungro'].dropna().to_list())
+# @app.get("/detect-symptomps/{description}")
+# def detect_symptoms(description : str): 
+#     df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
+#     bacterial_disease = " ".join(df['Bacterialblight'].dropna().to_list()) 
+#     blast_disease = " ".join(df['Blast'].dropna().to_list())
+#     brownspot_disease = " ".join(df['Brownspot'].dropna().to_list())
+#     tungro_disease = " ".join(df['Tungro'].dropna().to_list())
 
    
-    translator = Translator()
-    # model = SentenceTransformer('distilbert-base-nli-mean-tokens')
-    result1 = translator.translate(description, src='bn', dest='en')
-    description = result1.text
-    diseases = [bacterial_disease, blast_disease, brownspot_disease, tungro_disease]
-    diseases.append(description)
-    sentence_embeddings = nlp_model.encode(diseases)
+#     translator = Translator()
+#     # model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+#     result1 = translator.translate(description, src='bn', dest='en')
+#     description = result1.text
+#     diseases = [bacterial_disease, blast_disease, brownspot_disease, tungro_disease]
+#     diseases.append(description)
+#     sentence_embeddings = nlp_model.encode(diseases)
 
-    symptoms = [1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[0]), 
-        1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[1]), 
-        1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[2]),
-        1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[3])]
+#     symptoms = [1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[0]), 
+#         1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[1]), 
+#         1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[2]),
+#         1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[3])]
 
-    seq = np.array(symptoms).argsort()[-4:][::-1] 
-    leaf_classes[seq[0]], leaf_classes[seq[1]]
+#     seq = np.array(symptoms).argsort()[-4:][::-1] 
+#     leaf_classes[seq[0]], leaf_classes[seq[1]]
 
-    num = 2
-    symptoms_seq = [symptoms[s] for s in seq]
-    if (symptoms_seq[0] - symptoms_seq[1] > 0.12) : 
-        num = 1
-    elif (symptoms_seq[0]- symptoms_seq[3] <0.04 ): 
-        num = 4
-    elif (symptoms_seq[0]-symptoms_seq[2] <0.08 ):
-        num = 3 
+#     num = 2
+#     symptoms_seq = [symptoms[s] for s in seq]
+#     if (symptoms_seq[0] - symptoms_seq[1] > 0.12) : 
+#         num = 1
+#     elif (symptoms_seq[0]- symptoms_seq[3] <0.04 ): 
+#         num = 4
+#     elif (symptoms_seq[0]-symptoms_seq[2] <0.08 ):
+#         num = 3 
 
-    return {
-        'sim': [leaf_classes[s] for s in seq][:num],
-        'res': symptoms,
-        'all_seq': symptoms_seq
-        }
+#     return {
+#         'sim': [leaf_classes[s] for s in seq][:num],
+#         'res': symptoms,
+#         'all_seq': symptoms_seq
+#         }
         
 
 @app.get('/')
