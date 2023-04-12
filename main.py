@@ -61,7 +61,7 @@ from scipy.spatial import distance
 
 
 model = load_model('model_densenet121.h5', compile=False)
-# nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
 
 
 leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
@@ -149,12 +149,12 @@ def detect_symptoms(description : str):
 
    
     translator = Translator()
-    model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+    # model = SentenceTransformer('distilbert-base-nli-mean-tokens')
     result1 = translator.translate(description, src='bn', dest='en')
     description = result1.text
     diseases = [bacterial_disease, blast_disease, brownspot_disease, tungro_disease]
     diseases.append(description)
-    sentence_embeddings = model.encode(diseases)
+    sentence_embeddings = nlp_model.encode(diseases)
 
     symptoms = [1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[0]), 
         1 - distance.cosine(sentence_embeddings[4], sentence_embeddings[1]), 
