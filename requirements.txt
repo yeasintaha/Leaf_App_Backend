@@ -13,8 +13,6 @@ tensorflow
 keras
 ffmpeg
 sentence-transformers
-scikit-learn
-sklearn
 httptools
 websockets
 starlette
