@@ -42,101 +42,101 @@ middleware = [
 app = FastAPI(middleware=middleware)
 
 
-# Initialize the Firebase app
-cred = credentials.Certificate('leaf_app_firebase.json')
-firebase_app = initialize_app(cred, {
-    'storageBucket': 'leaf-app-8225f.appspot.com'
-})
+# # Initialize the Firebase app
+# cred = credentials.Certificate('leaf_app_firebase.json')
+# firebase_app = initialize_app(cred, {
+    # 'storageBucket': 'leaf-app-8225f.appspot.com'
+# })
 
 
-### Load model 
-from tensorflow.keras.models import load_model
-import tensorflow as tf
-# from sentence_transformers import SentenceTransformer
-import pandas as pd 
-from googletrans import Translator
-from scipy.spatial import distance
+# ### Load model 
+# from tensorflow.keras.models import load_model
+# import tensorflow as tf
+# # from sentence_transformers import SentenceTransformer
+# import pandas as pd 
+# from googletrans import Translator
+# from scipy.spatial import distance
 
 
 
 
-model = load_model('model_densenet121.h5', compile=False)
-# nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
+# model = load_model('model_densenet121.h5', compile=False)
+# # nlp_model = SentenceTransformer('distilbert-base-nli-mean-tokens')
 
 
-leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
+# leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
 
 
-# @app.get("/detect-voice/{voice_clip}")
-# def detect_image(voice_clip:str):
-#     full_path = f"Images/{voice_clip}"
+# # @app.get("/detect-voice/{voice_clip}")
+# # def detect_image(voice_clip:str):
+# #     full_path = f"Images/{voice_clip}"
+# #     bucket = storage.bucket(app=firebase_app)
+# #     blob = bucket.blob(full_path)
+# #     contents = blob.download_to_filename("voice_clip.mp3")
+# #     sound = pydub.AudioSegment.from_mp3("voice_clip.mp3")
+# #     sound.export("voice_clip.wav", format="wav")
+# #     r = sr.Recognizer()
+
+# #     with sr.AudioFile("voice_clip.wav") as source: 
+# #         print("File is being analised") 
+# #         audio = r.listen(source, phrase_time_limit=100000, ) 
+# #     try: 
+# #         text = r.recognize_google(audio, language='bn-BD')
+# #         return {"text" : text}
+# #     except:
+# #         return {"text": "-1"}
+
+
+# def preprocess_image(image):
+#     # Resize the image to the required size
+#     image = image.resize((128, 128))
+
+#     # Convert the image to a numpy array
+#     image = np.array(image)
+
+#     # Normalize the image to have values between 0 and 1
+#     image = image.astype('float32') / 255.0
+
+#     # Add a batch dimension to the image
+#     image = np.expand_dims(image, axis=0)
+
+#     return image
+
+# @app.get("/detect-image/{image_name}")
+# def detect_image(image_name:str):
+#     full_path = f"Images/{image_name}"
 #     bucket = storage.bucket(app=firebase_app)
 #     blob = bucket.blob(full_path)
-#     contents = blob.download_to_filename("voice_clip.mp3")
-#     sound = pydub.AudioSegment.from_mp3("voice_clip.mp3")
-#     sound.export("voice_clip.wav", format="wav")
-#     r = sr.Recognizer()
+#     # print(blob.generate_signed_url(datetime.timedelta(seconds=1000), method='GET'))
+#     contents = blob.download_as_bytes()
 
-#     with sr.AudioFile("voice_clip.wav") as source: 
-#         print("File is being analised") 
-#         audio = r.listen(source, phrase_time_limit=100000, ) 
-#     try: 
-#         text = r.recognize_google(audio, language='bn-BD')
-#         return {"text" : text}
-#     except:
-#         return {"text": "-1"}
+#     # Open the image as a PIL Image object
+#     img = Image.open(io.BytesIO(contents))
 
+#     # Preprocess the image for input to the model
+#     img = np.array(img)
+#     img = cv2.resize(img, (128, 128))
+#     img = img.astype('float32')/ 255.0 
+#     img = np.expand_dims(img, axis=0)
 
-def preprocess_image(image):
-    # Resize the image to the required size
-    image = image.resize((128, 128))
+#     prediction = model.predict(img)
 
-    # Convert the image to a numpy array
-    image = np.array(image)
-
-    # Normalize the image to have values between 0 and 1
-    image = image.astype('float32') / 255.0
-
-    # Add a batch dimension to the image
-    image = np.expand_dims(image, axis=0)
-
-    return image
-
-@app.get("/detect-image/{image_name}")
-def detect_image(image_name:str):
-    full_path = f"Images/{image_name}"
-    bucket = storage.bucket(app=firebase_app)
-    blob = bucket.blob(full_path)
-    # print(blob.generate_signed_url(datetime.timedelta(seconds=1000), method='GET'))
-    contents = blob.download_as_bytes()
-
-    # Open the image as a PIL Image object
-    img = Image.open(io.BytesIO(contents))
-
-    # Preprocess the image for input to the model
-    img = np.array(img)
-    img = cv2.resize(img, (128, 128))
-    img = img.astype('float32')/ 255.0 
-    img = np.expand_dims(img, axis=0)
-
-    prediction = model.predict(img)
-
-    return  [f'{leaf_classes[np.argmax(prediction)]}' , 
-             f'{sorted(prediction)[::-1][0]}']
+#     return  [f'{leaf_classes[np.argmax(prediction)]}' , 
+#              f'{sorted(prediction)[::-1][0]}']
 
 
-@app.get("/control-measures/{disease_name}") 
-def get_control_measures(disease_name : str): 
-    id = np.where(leaf_classes == disease_name) 
-    df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
+# @app.get("/control-measures/{disease_name}") 
+# def get_control_measures(disease_name : str): 
+#     id = np.where(leaf_classes == disease_name) 
+#     df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
 
-    bacterialblight_control_measures = df['Bacterialblight_control_measures'].dropna().to_list()
-    blast_control_measures = df['Blast_control_measures'].dropna().to_list()
-    brownspot_control_measures = df['Brownspot_control_measures'].dropna().to_list()
-    tungro_control_measures = df['Tungro_control_measures'].dropna().to_list()
-    control_measures = [bacterialblight_control_measures, blast_control_measures, brownspot_control_measures, tungro_control_measures]
-    # control_measures = np.array(control_measures)
-    return control_measures[int(id[0])]
+#     bacterialblight_control_measures = df['Bacterialblight_control_measures'].dropna().to_list()
+#     blast_control_measures = df['Blast_control_measures'].dropna().to_list()
+#     brownspot_control_measures = df['Brownspot_control_measures'].dropna().to_list()
+#     tungro_control_measures = df['Tungro_control_measures'].dropna().to_list()
+#     control_measures = [bacterialblight_control_measures, blast_control_measures, brownspot_control_measures, tungro_control_measures]
+#     # control_measures = np.array(control_measures)
+#     return control_measures[int(id[0])]
 
 
 # @app.get("/detect-symptomps/{description}")
