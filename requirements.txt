@@ -10,5 +10,11 @@ threadpoolctl
 typing_extensions
 watchfiles
 fastapi
+numpy
+pandas
+matplotlib
+scipy
+opencv-python
+googletrans
 
 
