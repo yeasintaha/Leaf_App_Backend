@@ -68,7 +68,7 @@ leaf_classes = np.array(["Bacterialblight", "Blast", "Brownspot", "Tungro"])
 
 
 @app.get("/detect-voice/{voice_clip}")
-def detect_image(voice_clip:str):
+async def detect_image(voice_clip:str):
     full_path = f"Images/{voice_clip}"
     bucket = storage.bucket(app=firebase_app)
     blob = bucket.blob(full_path)
@@ -88,7 +88,7 @@ def detect_image(voice_clip:str):
 
 
 @app.get("/detect-image/{image_name}")
-def detect_image(image_name:str):
+async def detect_image(image_name:str):
     full_path = f"Images/{image_name}"
     bucket = storage.bucket(app=firebase_app)
     blob = bucket.blob(full_path)
@@ -111,7 +111,7 @@ def detect_image(image_name:str):
 
 
 @app.get("/control-measures/{disease_name}") 
-def get_control_measures(disease_name : str): 
+async def get_control_measures(disease_name : str): 
     id = np.where(leaf_classes == disease_name) 
     df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
 
@@ -125,7 +125,7 @@ def get_control_measures(disease_name : str):
 
 
 @app.get("/detect-symptomps/{description}")
-def detect_symptoms(description : str): 
+async def detect_symptoms(description : str): 
     df = pd.read_excel('disease.xlsx', sheet_name='Sheet1')
     bacterial_disease = " ".join(df['Bacterialblight'].dropna().to_list()) 
     blast_disease = " ".join(df['Blast'].dropna().to_list())
@@ -166,11 +166,11 @@ def detect_symptoms(description : str):
         
 
 @app.get('/')
-def index():
+async def index():
     return {"message" : "welcome body"}
 
 @app.post('/todo')
-def get_something():
+async def get_something():
     return {'message': 'welcome'}
 
 

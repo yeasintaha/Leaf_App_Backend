@@ -18,4 +18,10 @@ websockets
 starlette
 uvloop
 gunicorn
+python-dateutil
+python-dotenv
+threadpoolctl
+typing_extensions
+watchfiles
+
 
