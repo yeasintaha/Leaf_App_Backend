@@ -22,5 +22,8 @@ uvicorn
 firebase_admin
 tensorflow
 pip==23.1
+keras
+ffmpeg
+sentence-transformers
 
 
